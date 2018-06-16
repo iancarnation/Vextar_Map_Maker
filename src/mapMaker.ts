@@ -63,6 +63,16 @@ class Game {
             this._engine.resize();
         });
     }
+
+    saveScene() : void {
+        let cereal = BABYLON.SceneSerializer.Serialize(this._scene);
+        let json = JSON.stringify(cereal);
+        let a = document.createElement("a");
+        let file = new Blob([json], {type: 'text/plain'});
+        a.href = URL.createObjectURL(file);
+        a.download = 'scene.json';
+        a.click();
+    }
 }
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -71,6 +81,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Create the scene.
     game.createScene();
+
+    //game.saveScene();
 
     // Start render loop.
     game.doRender();

@@ -43,6 +43,15 @@ var Game = /** @class */ (function () {
             _this._engine.resize();
         });
     };
+    Game.prototype.saveScene = function () {
+        var cereal = BABYLON.SceneSerializer.Serialize(this._scene);
+        var json = JSON.stringify(cereal);
+        var a = document.createElement("a");
+        var file = new Blob([json], { type: 'text/plain' });
+        a.href = URL.createObjectURL(file);
+        a.download = 'scene.json';
+        a.click();
+    };
     return Game;
 }());
 window.addEventListener('DOMContentLoaded', function () {
@@ -50,6 +59,7 @@ window.addEventListener('DOMContentLoaded', function () {
     var game = new Game('renderCanvas');
     // Create the scene.
     game.createScene();
+    //game.saveScene();
     // Start render loop.
     game.doRender();
 });
