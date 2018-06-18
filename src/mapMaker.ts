@@ -1,4 +1,5 @@
 ///<reference path="babylon.d.ts" />
+///<reference path="babylon.gui.d.ts" />
 
 class Game {
     private _canvas: HTMLCanvasElement;
@@ -39,6 +40,21 @@ class Game {
         // Create a built-in "ground" shape.
         let ground = BABYLON.MeshBuilder.CreateGround('ground1',
                                 {width: 6, height: 6, subdivisions: 2}, this._scene);
+
+        // ---------------------------------
+        let guiTex = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+
+        let saveBtn = BABYLON.GUI.Button.CreateSimpleButton("saveBtn", "Save Map");
+        saveBtn.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        saveBtn.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        saveBtn.width = "150px"
+        saveBtn.height = "40px";
+        saveBtn.color = "white";
+        saveBtn.cornerRadius = 20;
+        saveBtn.background = "green";
+        saveBtn.onPointerUpObservable.add(() => this.saveScene());
+        guiTex.addControl(saveBtn);
+        
 
         // ---------------------------------
 
@@ -82,7 +98,6 @@ window.addEventListener('DOMContentLoaded', () => {
     // Create the scene.
     game.createScene();
 
-    //game.saveScene();
 
     // Start render loop.
     game.doRender();

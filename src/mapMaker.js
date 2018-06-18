@@ -1,5 +1,6 @@
 "use strict";
 ///<reference path="babylon.d.ts" />
+///<reference path="babylon.gui.d.ts" />
 var Game = /** @class */ (function () {
     function Game(canvasElement) {
         // Create canvas and engine.
@@ -7,6 +8,7 @@ var Game = /** @class */ (function () {
         this._engine = new BABYLON.Engine(this._canvas, true);
     }
     Game.prototype.createScene = function () {
+        var _this = this;
         // Create a basic BJS Scene object.
         this._scene = new BABYLON.Scene(this._engine);
         // Create a FreeCamera, and set its position to (x:0, y:5, z:-10).
@@ -23,6 +25,18 @@ var Game = /** @class */ (function () {
         sphere.position.y = 1;
         // Create a built-in "ground" shape.
         var ground = BABYLON.MeshBuilder.CreateGround('ground1', { width: 6, height: 6, subdivisions: 2 }, this._scene);
+        // ---------------------------------
+        var guiTex = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+        var saveBtn = BABYLON.GUI.Button.CreateSimpleButton("saveBtn", "Save Map");
+        saveBtn.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        saveBtn.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        saveBtn.width = "150px";
+        saveBtn.height = "40px";
+        saveBtn.color = "white";
+        saveBtn.cornerRadius = 20;
+        saveBtn.background = "green";
+        saveBtn.onPointerUpObservable.add(function () { return _this.saveScene(); });
+        guiTex.addControl(saveBtn);
         // ---------------------------------
         var platform = BABYLON.MeshBuilder.CreateCylinder("platform", { height: 0.5, diameter: 4 }, this._scene);
         platform.position.y = 3;
@@ -59,7 +73,6 @@ window.addEventListener('DOMContentLoaded', function () {
     var game = new Game('renderCanvas');
     // Create the scene.
     game.createScene();
-    //game.saveScene();
     // Start render loop.
     game.doRender();
 });
