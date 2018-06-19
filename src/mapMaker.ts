@@ -81,13 +81,16 @@ class Game {
     }
 
     saveScene() : void {
+        let filename = 'scene.json';
         let cereal = BABYLON.SceneSerializer.Serialize(this._scene);
         let json = JSON.stringify(cereal);
         let a = document.createElement("a");
         let file = new Blob([json], {type: 'text/plain'});
         a.href = URL.createObjectURL(file);
-        a.download = 'scene.json';
+        a.download = filename;
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
     }
 }
 
@@ -97,7 +100,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Create the scene.
     game.createScene();
-
 
     // Start render loop.
     game.doRender();

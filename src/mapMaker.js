@@ -58,13 +58,16 @@ var Game = /** @class */ (function () {
         });
     };
     Game.prototype.saveScene = function () {
+        var filename = 'scene.json';
         var cereal = BABYLON.SceneSerializer.Serialize(this._scene);
         var json = JSON.stringify(cereal);
         var a = document.createElement("a");
         var file = new Blob([json], { type: 'text/plain' });
         a.href = URL.createObjectURL(file);
-        a.download = 'scene.json';
+        a.download = filename;
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
     };
     return Game;
 }());
