@@ -1,6 +1,7 @@
 "use strict";
 ///<reference path="babylon.d.ts" />
 ///<reference path="babylon.gui.d.ts" />
+var EditControl = org.ssatguru.babylonjs.component.EditControl;
 var Game = /** @class */ (function () {
     function Game(canvasElement) {
         // Create canvas and engine.
@@ -9,13 +10,10 @@ var Game = /** @class */ (function () {
     }
     Game.prototype.createScene = function () {
         var _this = this;
-        // Create a basic BJS Scene object.
         this._scene = new BABYLON.Scene(this._engine);
-        // Create a FreeCamera, and set its position to (x:0, y:5, z:-10).
-        this._camera = new BABYLON.FreeCamera('camera1', new BABYLON.Vector3(0, 5, -10), this._scene);
-        // Target the camera to scene origin.
+        this._camera = new BABYLON.ArcRotateCamera("perspective_default", Math.PI / 4, Math.PI / 4, 20, new BABYLON.Vector3(0, 0, 0), this._scene);
+        this._camera.wheelPrecision = 15;
         this._camera.setTarget(BABYLON.Vector3.Zero());
-        // Attach the camera to the canvas.
         this._camera.attachControl(this._canvas, false);
         // Create a basic light, aiming 0,1,0 - meaning, to the sky.
         this._light = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(0, 1, 0), this._scene);
@@ -37,6 +35,8 @@ var Game = /** @class */ (function () {
         saveBtn.background = "green";
         saveBtn.onPointerUpObservable.add(function () { return _this.saveScene(); });
         guiTex.addControl(saveBtn);
+        //****
+        var editControl = this.attachEditControl(ground);
         // ---------------------------------
         var platform = BABYLON.MeshBuilder.CreateCylinder("platform", { height: 0.5, diameter: 4 }, this._scene);
         platform.position.y = 3;
@@ -68,6 +68,19 @@ var Game = /** @class */ (function () {
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+    };
+    Game.prototype.attachEditControl = function (mesh) {
+        var ec = new EditControl(mesh, this._camera, this._canvas, 0.75, true, 0.02);
+        ec.enableTranslation();
+        ec.setRotSnapValue(3.14 / 18);
+        ec.setTransSnapValue(0.5);
+        ec.setScaleSnapValue(0.25);
+        /*      ec.addActionStartListener(actionStartListener);
+                ec.addActionListener(actionListener);
+                ec.addActionEndListener(actionEndListener);
+         */
+        console.log(ec.isHidden());
+        return ec;
     };
     return Game;
 }());

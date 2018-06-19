@@ -1,11 +1,13 @@
 ///<reference path="babylon.d.ts" />
 ///<reference path="babylon.gui.d.ts" />
+import EditControl = org.ssatguru.babylonjs.component.EditControl;
+
 
 class Game {
     private _canvas: HTMLCanvasElement;
     private _engine: BABYLON.Engine;
     private _scene: BABYLON.Scene;
-    private _camera: BABYLON.FreeCamera;
+    private _camera: BABYLON.ArcRotateCamera;
     private _light: BABYLON.Light;
 
     constructor(canvasElement : string) {
@@ -15,16 +17,12 @@ class Game {
     }
 
     createScene() : void {
-        // Create a basic BJS Scene object.
         this._scene = new BABYLON.Scene(this._engine);
 
-        // Create a FreeCamera, and set its position to (x:0, y:5, z:-10).
-        this._camera = new BABYLON.FreeCamera('camera1', new BABYLON.Vector3(0, 5,-10), this._scene);
-
-        // Target the camera to scene origin.
+        this._camera = new BABYLON.ArcRotateCamera("perspective_default", Math.PI/4, Math.PI/4, 
+                                                    20, new BABYLON.Vector3(0,0,0), this._scene);
+        this._camera.wheelPrecision = 15;
         this._camera.setTarget(BABYLON.Vector3.Zero());
-
-        // Attach the camera to the canvas.
         this._camera.attachControl(this._canvas, false);
 
         // Create a basic light, aiming 0,1,0 - meaning, to the sky.
@@ -54,6 +52,9 @@ class Game {
         saveBtn.background = "green";
         saveBtn.onPointerUpObservable.add(() => this.saveScene());
         guiTex.addControl(saveBtn);
+        
+        //****
+        let editControl = this.attachEditControl(ground);
         
 
         // ---------------------------------
@@ -91,6 +92,22 @@ class Game {
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+    }
+
+    attachEditControl(mesh: BABYLON.Mesh) : EditControl {
+        let ec:EditControl = new EditControl(mesh, this._camera, this._canvas, 0.75, true, 0.02);
+        
+        ec.enableTranslation();
+        ec.setRotSnapValue(3.14/18);
+        ec.setTransSnapValue(0.5);
+        ec.setScaleSnapValue(0.25);
+
+/*      ec.addActionStartListener(actionStartListener);
+        ec.addActionListener(actionListener);
+        ec.addActionEndListener(actionEndListener);
+ */
+        console.log(ec.isHidden());
+        return ec;
     }
 }
 
