@@ -2,7 +2,6 @@
 ///<reference path="babylon.gui.d.ts" />
 import EditControl = org.ssatguru.babylonjs.component.EditControl;
 
-
 class Game {
     private _canvas: HTMLCanvasElement;
     private _engine: BABYLON.Engine;
@@ -10,10 +9,18 @@ class Game {
     private _camera: BABYLON.ArcRotateCamera;
     private _light: BABYLON.Light;
 
+    private _pointerup: EventListener; 
+    
+    editControl: EditControl;
+
     constructor(canvasElement : string) {
         // Create canvas and engine.
         this._canvas = document.getElementById(canvasElement) as HTMLCanvasElement;
         this._engine = new BABYLON.Engine(this._canvas, true);
+
+        this._pointerup=(evt) => {return this.onPointerUp(evt)};
+
+        this._canvas.addEventListener("pointerup", this._pointerup, false);
     }
 
     createScene() : void {
@@ -22,6 +29,8 @@ class Game {
         this._camera = new BABYLON.ArcRotateCamera("perspective_default", Math.PI/4, Math.PI/4, 
                                                     20, new BABYLON.Vector3(0,0,0), this._scene);
         this._camera.wheelPrecision = 15;
+        this._camera.inertia = 0.2;
+        this._camera.panningInertia = 0.2;
         this._camera.setTarget(BABYLON.Vector3.Zero());
         this._camera.attachControl(this._canvas, false);
 
@@ -54,7 +63,8 @@ class Game {
         guiTex.addControl(saveBtn);
         
         //****
-        let editControl = this.attachEditControl(ground);
+        //this._scene.onPointerObservable.add(handlePointer);
+        this.editControl = this.attachEditControl(ground);
         
 
         // ---------------------------------
@@ -66,6 +76,10 @@ class Game {
         let platform3 = platform.createInstance("platform3");
         platform3.position.x = 2.5;
         platform3.position.z = 5;
+
+
+        let platformNode = new Platform("mrNode",new BABYLON.Vector3(0,0,0), this._scene);
+
 
     }
 
@@ -109,6 +123,18 @@ class Game {
         console.log(ec.isHidden());
         return ec;
     }
+
+    onPointerUp(evt:Event) : void
+    {
+        let pick = this._scene.pick(this._scene.pointerX, this._scene.pointerY);
+        let mesh:BABYLON.Mesh;
+        if (pick.hit)
+        {
+            mesh = pick.pickedMesh;
+            this.editControl.switchTo(mesh.parent); // move transform node
+            console.log("Picked", mesh);
+        }       
+    }
 }
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -121,3 +147,17 @@ window.addEventListener('DOMContentLoaded', () => {
     // Start render loop.
     game.doRender();
 });
+
+class Platform
+{
+    node:BABYLON.TransformNode;
+    mesh:BABYLON.Mesh;
+
+    constructor(id:string, position:BABYLON.Vector3, scene:BABYLON.Scene)
+    {
+        this.node = new BABYLON.TransformNode(id, scene);
+        this.node.position = position;
+        this.mesh = BABYLON.MeshBuilder.CreateCylinder("platform", {height: 0.5, diameter: 4}, scene);
+        this.mesh.parent = this.node;
+    }
+}

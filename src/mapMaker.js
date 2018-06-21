@@ -4,15 +4,20 @@
 var EditControl = org.ssatguru.babylonjs.component.EditControl;
 var Game = /** @class */ (function () {
     function Game(canvasElement) {
+        var _this = this;
         // Create canvas and engine.
         this._canvas = document.getElementById(canvasElement);
         this._engine = new BABYLON.Engine(this._canvas, true);
+        this._pointerup = function (evt) { return _this.onPointerUp(evt); };
+        this._canvas.addEventListener("pointerup", this._pointerup, false);
     }
     Game.prototype.createScene = function () {
         var _this = this;
         this._scene = new BABYLON.Scene(this._engine);
         this._camera = new BABYLON.ArcRotateCamera("perspective_default", Math.PI / 4, Math.PI / 4, 20, new BABYLON.Vector3(0, 0, 0), this._scene);
         this._camera.wheelPrecision = 15;
+        this._camera.inertia = 0.2;
+        this._camera.panningInertia = 0.2;
         this._camera.setTarget(BABYLON.Vector3.Zero());
         this._camera.attachControl(this._canvas, false);
         // Create a basic light, aiming 0,1,0 - meaning, to the sky.
@@ -36,7 +41,8 @@ var Game = /** @class */ (function () {
         saveBtn.onPointerUpObservable.add(function () { return _this.saveScene(); });
         guiTex.addControl(saveBtn);
         //****
-        var editControl = this.attachEditControl(ground);
+        //this._scene.onPointerObservable.add(handlePointer);
+        this.editControl = this.attachEditControl(ground);
         // ---------------------------------
         var platform = BABYLON.MeshBuilder.CreateCylinder("platform", { height: 0.5, diameter: 4 }, this._scene);
         platform.position.y = 3;
@@ -45,6 +51,7 @@ var Game = /** @class */ (function () {
         var platform3 = platform.createInstance("platform3");
         platform3.position.x = 2.5;
         platform3.position.z = 5;
+        var platformNode = new Platform("mrNode", new BABYLON.Vector3(0, 0, 0), this._scene);
     };
     Game.prototype.doRender = function () {
         var _this = this;
@@ -82,6 +89,15 @@ var Game = /** @class */ (function () {
         console.log(ec.isHidden());
         return ec;
     };
+    Game.prototype.onPointerUp = function (evt) {
+        var pick = this._scene.pick(this._scene.pointerX, this._scene.pointerY);
+        var mesh;
+        if (pick.hit) {
+            mesh = pick.pickedMesh;
+            this.editControl.switchTo(mesh.parent); // move transform node
+            console.log("Picked", mesh);
+        }
+    };
     return Game;
 }());
 window.addEventListener('DOMContentLoaded', function () {
@@ -92,3 +108,12 @@ window.addEventListener('DOMContentLoaded', function () {
     // Start render loop.
     game.doRender();
 });
+var Platform = /** @class */ (function () {
+    function Platform(id, position, scene) {
+        this.node = new BABYLON.TransformNode(id, scene);
+        this.node.position = position;
+        this.mesh = BABYLON.MeshBuilder.CreateCylinder("platform", { height: 0.5, diameter: 4 }, scene);
+        this.mesh.parent = this.node;
+    }
+    return Platform;
+}());
