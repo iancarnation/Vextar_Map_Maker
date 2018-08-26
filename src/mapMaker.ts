@@ -102,7 +102,7 @@ class Game {
         console.log(name);
         let p = new Platform(name,new BABYLON.Vector3(0,0,0), this._scene);
         this.platformCount ++;
-        this._editControl.switchTo(p.mesh);
+        this._editControl.switchTo(p.transform);
     }
 
     saveScene() : void 

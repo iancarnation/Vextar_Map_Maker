@@ -76,7 +76,7 @@ var Game = /** @class */ (function () {
         console.log(name);
         var p = new Platform(name, new BABYLON.Vector3(0, 0, 0), this._scene);
         this.platformCount++;
-        this._editControl.switchTo(p.mesh);
+        this._editControl.switchTo(p.transform);
     };
     Game.prototype.saveScene = function () {
         var filename = 'scene.json';
