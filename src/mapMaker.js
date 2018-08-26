@@ -22,14 +22,17 @@ var Game = /** @class */ (function () {
         this._camera.setTarget(BABYLON.Vector3.Zero());
         this._camera.attachControl(this._canvas, false);
         this._light = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(0, 1, 0), this._scene);
-        // Create a built-in "ground" shape.
-        var ground = BABYLON.MeshBuilder.CreateGround('Grid', { width: 20, height: 20, subdivisions: 20 }, this._scene);
-        ground.material = new BABYLON.StandardMaterial("GridMaterial", this._scene);
-        ground.material.wireframe = true;
-        ground.material.backFaceCulling = true;
-        //ground.material.diffuseColor = new BABYLON.Color3(1, 1, 1);
-        ground.isPickable = false;
-        // ground.data = {uid: -1, type: 'staticSceneObject'}; // not sure what this is for
+        /*
+                // Create a built-in "ground" shape.
+                let ground = BABYLON.MeshBuilder.CreateGround('Grid',
+                                        {width: 20, height: 20, subdivisions: 20}, this._scene);
+                ground.material = new BABYLON.StandardMaterial("GridMaterial", this._scene);
+                ground.material.wireframe = true;
+                ground.material.backFaceCulling = true;
+                //ground.material.diffuseColor = new BABYLON.Color3(1, 1, 1);
+                ground.isPickable = false;
+                // ground.data = {uid: -1, type: 'staticSceneObject'}; // not sure what this is for
+                */
         // ---------------------------------
         var guiTex = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
         var panel = new BABYLON.GUI.StackPanel();
@@ -54,9 +57,32 @@ var Game = /** @class */ (function () {
         panel.addControl(platformBtn);
         //****
         //this._scene.onPointerObservable.add(handlePointer);
-        this._editControl = this.attachEditControl(ground);
+        // this._editControl = this.attachEditControl(ground);
         // ---------------------------------
-        this.addPlatform();
+        //this.addPlatform();
+        var positions = [];
+        var indices = [];
+        var numSides = 5;
+        var angle = 2 * Math.PI / numSides;
+        var radius = 5;
+        for (var i = 0; i < numSides; i++) {
+            var x = radius * Math.sin(i * angle);
+            var z = radius * Math.cos(i * angle);
+            positions.push(x, 0, z);
+            indices.push(i);
+            var sphere = BABYLON.MeshBuilder.CreateSphere('sphere', { segments: 16, diameter: 2 }, this._scene);
+            sphere.position.x = x;
+            sphere.position.z = z;
+        }
+        console.log(positions);
+        var customMesh = new BABYLON.Mesh("custom", this._scene);
+        var vertexData = new BABYLON.VertexData();
+        vertexData.positions = positions;
+        vertexData.indices = indices;
+        vertexData.applyToMesh(customMesh);
+        var mat = new BABYLON.StandardMaterial("mat", this._scene);
+        mat.diffuseColor = new BABYLON.Color3(1, 0, 1);
+        customMesh.material = mat;
     };
     Game.prototype.doRender = function () {
         var _this = this;

@@ -37,7 +37,7 @@ class Game {
         this._camera.attachControl(this._canvas, false);
 
         this._light = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(0,1,0), this._scene);
-
+/*
         // Create a built-in "ground" shape.
         let ground = BABYLON.MeshBuilder.CreateGround('Grid',
                                 {width: 20, height: 20, subdivisions: 20}, this._scene);
@@ -47,6 +47,7 @@ class Game {
         //ground.material.diffuseColor = new BABYLON.Color3(1, 1, 1);
         ground.isPickable = false;
         // ground.data = {uid: -1, type: 'staticSceneObject'}; // not sure what this is for
+        */
         // ---------------------------------
         let guiTex = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
@@ -74,12 +75,38 @@ class Game {
         panel.addControl(platformBtn);
         //****
         //this._scene.onPointerObservable.add(handlePointer);
-        this._editControl = this.attachEditControl(ground);
+       // this._editControl = this.attachEditControl(ground);
         
         // ---------------------------------
 
-        this.addPlatform();
+        //this.addPlatform();
 
+        let positions = [];
+        let indices = [];
+        let numSides = 5;
+        let angle = 2 * Math.PI / numSides;
+        let radius = 5;
+        for (let i=0; i<numSides; i++)
+        {
+            let x = radius * Math.sin(i * angle);
+            let z = radius * Math.cos(i * angle);
+            positions.push(x,0,z);
+            indices.push(i);
+            let sphere = BABYLON.MeshBuilder.CreateSphere('sphere', {segments:16, diameter:2}, this._scene);
+            sphere.position.x = x;
+            sphere.position.z = z;
+        }
+        console.log(positions);
+        let customMesh = new BABYLON.Mesh("custom", this._scene);
+        
+        let vertexData = new BABYLON.VertexData();
+        vertexData.positions = positions;
+        vertexData.indices = indices;
+        vertexData.applyToMesh(customMesh);
+
+        let mat = new BABYLON.StandardMaterial("mat", this._scene);
+	    mat.diffuseColor = new BABYLON.Color3(1, 0, 1);
+	    customMesh.material = mat;
     }
 
     doRender() : void {
