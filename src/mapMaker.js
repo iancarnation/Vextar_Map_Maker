@@ -5,6 +5,7 @@ var EditControl = org.ssatguru.babylonjs.component.EditControl;
 var Game = /** @class */ (function () {
     function Game(canvasElement) {
         var _this = this;
+        this.platformCount = 0;
         // Create canvas and engine.
         this._canvas = document.getElementById(canvasElement);
         this._engine = new BABYLON.Engine(this._canvas, true);
@@ -20,38 +21,42 @@ var Game = /** @class */ (function () {
         this._camera.panningInertia = 0.2;
         this._camera.setTarget(BABYLON.Vector3.Zero());
         this._camera.attachControl(this._canvas, false);
-        // Create a basic light, aiming 0,1,0 - meaning, to the sky.
         this._light = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(0, 1, 0), this._scene);
-        // Create a built-in "sphere" shape; with 16 segments and diameter of 2.
-        var sphere = BABYLON.MeshBuilder.CreateSphere('sphere1', { segments: 16, diameter: 2 }, this._scene);
-        // Move the sphere upward 1/2 of its height.
-        sphere.position.y = 1;
         // Create a built-in "ground" shape.
-        var ground = BABYLON.MeshBuilder.CreateGround('ground1', { width: 6, height: 6, subdivisions: 2 }, this._scene);
+        var ground = BABYLON.MeshBuilder.CreateGround('Grid', { width: 20, height: 20, subdivisions: 20 }, this._scene);
+        ground.material = new BABYLON.StandardMaterial("GridMaterial", this._scene);
+        ground.material.wireframe = true;
+        ground.material.backFaceCulling = true;
+        ground.material.diffuseColor = new BABYLON.Color3(1, 1, 1);
+        ground.isPickable = false;
+        ground.data = { uid: -1, type: 'staticSceneObject' };
         // ---------------------------------
         var guiTex = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+        var panel = new BABYLON.GUI.StackPanel();
+        panel.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        panel.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        guiTex.addControl(panel);
         var saveBtn = BABYLON.GUI.Button.CreateSimpleButton("saveBtn", "Save Map");
-        saveBtn.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-        saveBtn.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
         saveBtn.width = "150px";
         saveBtn.height = "40px";
         saveBtn.color = "white";
         saveBtn.cornerRadius = 20;
         saveBtn.background = "green";
         saveBtn.onPointerUpObservable.add(function () { return _this.saveScene(); });
-        guiTex.addControl(saveBtn);
+        panel.addControl(saveBtn);
+        var platformBtn = BABYLON.GUI.Button.CreateSimpleButton("platformBtn", "Add Platform");
+        platformBtn.width = "150px";
+        platformBtn.height = "40px";
+        platformBtn.color = "white";
+        platformBtn.cornerRadius = 20;
+        platformBtn.background = "red";
+        platformBtn.onPointerUpObservable.add(function () { return _this.addPlatform(); });
+        panel.addControl(platformBtn);
         //****
         //this._scene.onPointerObservable.add(handlePointer);
-        this.editControl = this.attachEditControl(ground);
+        this._editControl = this.attachEditControl(ground);
         // ---------------------------------
-        var platform = BABYLON.MeshBuilder.CreateCylinder("platform", { height: 0.5, diameter: 4 }, this._scene);
-        platform.position.y = 3;
-        var platform2 = platform.createInstance("platform2");
-        platform2.position.x = 5;
-        var platform3 = platform.createInstance("platform3");
-        platform3.position.x = 2.5;
-        platform3.position.z = 5;
-        var platformNode = new Platform("mrNode", new BABYLON.Vector3(0, 0, 0), this._scene);
+        this.addPlatform();
     };
     Game.prototype.doRender = function () {
         var _this = this;
@@ -63,6 +68,12 @@ var Game = /** @class */ (function () {
         window.addEventListener('resize', function () {
             _this._engine.resize();
         });
+    };
+    // ----------------------------------------------------------
+    Game.prototype.addPlatform = function () {
+        var p = new Platform("platform" + this.platformCount, new BABYLON.Vector3(0, 0, 0), this._scene);
+        this.platformCount++;
+        this._editControl.switchTo(p.node);
     };
     Game.prototype.saveScene = function () {
         var filename = 'scene.json';
@@ -92,14 +103,16 @@ var Game = /** @class */ (function () {
     Game.prototype.onPointerUp = function (evt) {
         var pick = this._scene.pick(this._scene.pointerX, this._scene.pointerY);
         var mesh;
-        if (pick.hit) {
+        if (pick != null && pick.hit) {
             mesh = pick.pickedMesh;
-            this.editControl.switchTo(mesh.parent); // move transform node
+            // edit via transform node, re: Platform class .. TODO: make func to handle switching?
+            this._editControl.switchTo(mesh.parent);
             console.log("Picked", mesh);
         }
     };
     return Game;
 }());
+// -------------------------------------------------------------------
 window.addEventListener('DOMContentLoaded', function () {
     // Create the game using the 'renderCanvas'.
     var game = new Game('renderCanvas');
@@ -108,6 +121,7 @@ window.addEventListener('DOMContentLoaded', function () {
     // Start render loop.
     game.doRender();
 });
+// maybe use this transform node setup for parenting/grouping ??
 var Platform = /** @class */ (function () {
     function Platform(id, position, scene) {
         this.node = new BABYLON.TransformNode(id, scene);
