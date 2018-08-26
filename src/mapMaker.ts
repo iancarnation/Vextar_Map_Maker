@@ -44,9 +44,9 @@ class Game {
         ground.material = new BABYLON.StandardMaterial("GridMaterial", this._scene);
         ground.material.wireframe = true;
         ground.material.backFaceCulling = true;
-        ground.material.diffuseColor = new BABYLON.Color3(1, 1, 1);
+        //ground.material.diffuseColor = new BABYLON.Color3(1, 1, 1);
         ground.isPickable = false;
-        ground.data = {uid: -1, type: 'staticSceneObject'};
+        // ground.data = {uid: -1, type: 'staticSceneObject'}; // not sure what this is for
         // ---------------------------------
         let guiTex = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
@@ -95,14 +95,18 @@ class Game {
     }
 
 // ----------------------------------------------------------
-    addPlatform() : void {
-        
-        let p = new Platform("platform"+this.platformCount,new BABYLON.Vector3(0,0,0), this._scene);
+    addPlatform() : void 
+    {
+        let name = "platform";
+        name += this.platformCount;
+        console.log(name);
+        let p = new Platform(name,new BABYLON.Vector3(0,0,0), this._scene);
         this.platformCount ++;
-        this._editControl.switchTo(p.node);
+        this._editControl.switchTo(p.mesh);
     }
 
-    saveScene() : void {
+    saveScene() : void 
+    {
         let filename = 'scene.json';
         let cereal = BABYLON.SceneSerializer.Serialize(this._scene);
         let json = JSON.stringify(cereal);
@@ -115,7 +119,8 @@ class Game {
         document.body.removeChild(a);
     }
 
-    attachEditControl(mesh: BABYLON.Mesh) : EditControl {
+    attachEditControl(mesh: BABYLON.Mesh) : EditControl 
+    {
         let ec:EditControl = new EditControl(mesh, this._camera, this._canvas, 0.75, true, 0.02);
         
         ec.enableTranslation();
@@ -138,7 +143,7 @@ class Game {
         if (pick != null && pick.hit)
         {
             mesh = pick.pickedMesh;
-            // edit via transform node, re: Platform class .. TODO: make func to handle switching?
+            // edit via transform node, re: Platform class .. despite type complaint
             this._editControl.switchTo(mesh.parent); 
             console.log("Picked", mesh);
         }       
@@ -161,14 +166,19 @@ window.addEventListener('DOMContentLoaded', () => {
 // maybe use this transform node setup for parenting/grouping ??
 class Platform
 {
-    node:BABYLON.TransformNode;
+    transform:BABYLON.TransformNode;
     mesh:BABYLON.Mesh;
 
     constructor(id:string, position:BABYLON.Vector3, scene:BABYLON.Scene)
     {
-        this.node = new BABYLON.TransformNode(id, scene);
-        this.node.position = position;
-        this.mesh = BABYLON.MeshBuilder.CreateCylinder("platform", {height: 0.5, diameter: 4}, scene);
-        this.mesh.parent = this.node;
+        this.transform = new BABYLON.TransformNode(id, scene);
+        this.transform.position = position;
+        this.mesh = BABYLON.MeshBuilder.CreateCylinder(id, {height: 0.5, diameter: 4}, scene);
+        this.mesh.parent = this.transform;
+    }
+
+    setParent(target:BABYLON.TransformNode)
+    {
+        this.transform.parent = target;
     }
 }

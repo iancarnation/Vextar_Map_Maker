@@ -27,9 +27,9 @@ var Game = /** @class */ (function () {
         ground.material = new BABYLON.StandardMaterial("GridMaterial", this._scene);
         ground.material.wireframe = true;
         ground.material.backFaceCulling = true;
-        ground.material.diffuseColor = new BABYLON.Color3(1, 1, 1);
+        //ground.material.diffuseColor = new BABYLON.Color3(1, 1, 1);
         ground.isPickable = false;
-        ground.data = { uid: -1, type: 'staticSceneObject' };
+        // ground.data = {uid: -1, type: 'staticSceneObject'}; // not sure what this is for
         // ---------------------------------
         var guiTex = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
         var panel = new BABYLON.GUI.StackPanel();
@@ -71,9 +71,12 @@ var Game = /** @class */ (function () {
     };
     // ----------------------------------------------------------
     Game.prototype.addPlatform = function () {
-        var p = new Platform("platform" + this.platformCount, new BABYLON.Vector3(0, 0, 0), this._scene);
+        var name = "platform";
+        name += this.platformCount;
+        console.log(name);
+        var p = new Platform(name, new BABYLON.Vector3(0, 0, 0), this._scene);
         this.platformCount++;
-        this._editControl.switchTo(p.node);
+        this._editControl.switchTo(p.mesh);
     };
     Game.prototype.saveScene = function () {
         var filename = 'scene.json';
@@ -105,7 +108,7 @@ var Game = /** @class */ (function () {
         var mesh;
         if (pick != null && pick.hit) {
             mesh = pick.pickedMesh;
-            // edit via transform node, re: Platform class .. TODO: make func to handle switching?
+            // edit via transform node, re: Platform class .. despite type complaint
             this._editControl.switchTo(mesh.parent);
             console.log("Picked", mesh);
         }
@@ -124,10 +127,13 @@ window.addEventListener('DOMContentLoaded', function () {
 // maybe use this transform node setup for parenting/grouping ??
 var Platform = /** @class */ (function () {
     function Platform(id, position, scene) {
-        this.node = new BABYLON.TransformNode(id, scene);
-        this.node.position = position;
-        this.mesh = BABYLON.MeshBuilder.CreateCylinder("platform", { height: 0.5, diameter: 4 }, scene);
-        this.mesh.parent = this.node;
+        this.transform = new BABYLON.TransformNode(id, scene);
+        this.transform.position = position;
+        this.mesh = BABYLON.MeshBuilder.CreateCylinder(id, { height: 0.5, diameter: 4 }, scene);
+        this.mesh.parent = this.transform;
     }
+    Platform.prototype.setParent = function (target) {
+        this.transform.parent = target;
+    };
     return Platform;
 }());
