@@ -15,6 +15,7 @@ var Game = /** @class */ (function () {
     Game.prototype.createScene = function () {
         var _this = this;
         this._scene = new BABYLON.Scene(this._engine);
+        this._scene.metadata = { steps: [] };
         this._camera = new BABYLON.ArcRotateCamera("perspective_default", Math.PI / 4, Math.PI / 4, 20, new BABYLON.Vector3(0, 0, 0), this._scene);
         this._camera.wheelPrecision = 15;
         this._camera.inertia = 0.2;
@@ -22,18 +23,14 @@ var Game = /** @class */ (function () {
         this._camera.setTarget(BABYLON.Vector3.Zero());
         this._camera.attachControl(this._canvas, false);
         this._light = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(0, 1, 0), this._scene);
-        /*
-                // Create a built-in "ground" shape.
-                let ground = BABYLON.MeshBuilder.CreateGround('Grid',
-                                        {width: 20, height: 20, subdivisions: 20}, this._scene);
-                ground.material = new BABYLON.StandardMaterial("GridMaterial", this._scene);
-                ground.material.wireframe = true;
-                ground.material.backFaceCulling = true;
-                //ground.material.diffuseColor = new BABYLON.Color3(1, 1, 1);
-                ground.isPickable = false;
-                // ground.data = {uid: -1, type: 'staticSceneObject'}; // not sure what this is for
-                */
-        // ---------------------------------
+        var ground = BABYLON.MeshBuilder.CreateGround('Grid', { width: 20, height: 20, subdivisions: 20 }, this._scene);
+        ground.material = new BABYLON.StandardMaterial("GridMaterial", this._scene);
+        ground.material.wireframe = true;
+        ground.material.backFaceCulling = false;
+        //ground.material.diffuseColor = new BABYLON.Color3(1, 1, 1);
+        ground.isPickable = false;
+        // ground.data = {uid: -1, type: 'staticSceneObject'}; // not sure what this is for
+        // GUI ---------------------------------
         var guiTex = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
         var panel = new BABYLON.GUI.StackPanel();
         panel.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
@@ -52,37 +49,16 @@ var Game = /** @class */ (function () {
         platformBtn.height = "40px";
         platformBtn.color = "white";
         platformBtn.cornerRadius = 20;
-        platformBtn.background = "red";
+        platformBtn.background = "orange";
         platformBtn.onPointerUpObservable.add(function () { return _this.addPlatform(); });
         panel.addControl(platformBtn);
         //****
-        //this._scene.onPointerObservable.add(handlePointer);
-        // this._editControl = this.attachEditControl(ground);
+        //this._scene.onPointerObservable.add(handlePointer); //forgot where this came from.. EditControl??
+        this._editControl = this.attachEditControl(ground);
         // ---------------------------------
         //this.addPlatform();
-        var positions = [];
-        var indices = [];
-        var numSides = 5;
-        var angle = 2 * Math.PI / numSides;
-        var radius = 5;
-        for (var i = 0; i < numSides; i++) {
-            var x = radius * Math.sin(i * angle);
-            var z = radius * Math.cos(i * angle);
-            positions.push(x, 0, z);
-            indices.push(i);
-            var sphere = BABYLON.MeshBuilder.CreateSphere('sphere', { segments: 16, diameter: 2 }, this._scene);
-            sphere.position.x = x;
-            sphere.position.z = z;
-        }
-        console.log(positions);
-        var customMesh = new BABYLON.Mesh("custom", this._scene);
-        var vertexData = new BABYLON.VertexData();
-        vertexData.positions = positions;
-        vertexData.indices = indices;
-        vertexData.applyToMesh(customMesh);
-        var mat = new BABYLON.StandardMaterial("mat", this._scene);
-        mat.diffuseColor = new BABYLON.Color3(1, 0, 1);
-        customMesh.material = mat;
+        var startingShape = new LayoutShape(5, this._scene);
+        this._editControl.switchTo(startingShape.pivotMesh);
     };
     Game.prototype.doRender = function () {
         var _this = this;
@@ -96,11 +72,11 @@ var Game = /** @class */ (function () {
         });
     };
     // ----------------------------------------------------------
-    Game.prototype.addPlatform = function () {
-        var name = "platform";
-        name += this.platformCount;
-        console.log(name);
-        var p = new Platform(name, new BABYLON.Vector3(0, 0, 0), this._scene);
+    Game.prototype.addPlatform = function (position) {
+        if (position === void 0) { position = new BABYLON.Vector3(0, 0, 0); }
+        var id = "platform";
+        id += this.platformCount;
+        var p = new Platform(id, new BABYLON.Vector3(0, 0, 0), this._scene);
         this.platformCount++;
         this._editControl.switchTo(p.transform);
     };
@@ -134,8 +110,8 @@ var Game = /** @class */ (function () {
         var mesh;
         if (pick != null && pick.hit) {
             mesh = pick.pickedMesh;
-            // edit via transform node, re: Platform class .. despite type complaint
-            this._editControl.switchTo(mesh.parent);
+            // edit via transform node, re: Platform class? .. despite type complaint
+            this._editControl.switchTo(mesh);
             console.log("Picked", mesh);
         }
     };
@@ -162,4 +138,40 @@ var Platform = /** @class */ (function () {
         this.transform.parent = target;
     };
     return Platform;
+}());
+var LayoutShape = /** @class */ (function () {
+    function LayoutShape(numSides, scene, pivot, radius) {
+        if (pivot === void 0) { pivot = new BABYLON.Vector3(0, 0, 0); }
+        if (radius === void 0) { radius = 5; }
+        this.coordinates = [];
+        this.indices = [];
+        this.positions = [];
+        this.platforms = [];
+        this.pivotMesh = BABYLON.MeshBuilder.CreateSphere('pivotMesh', { segments: 1, diameter: 1 }, this._scene);
+        this.pivotMesh.position = pivot;
+        var angle = 2 * Math.PI / numSides;
+        for (var i = 0; i < numSides; i++) {
+            var x = radius * Math.sin(i * angle);
+            var z = radius * Math.cos(i * angle);
+            this.coordinates.push(x, 0, z);
+            this.indices.push(i);
+            this.positions.push(new BABYLON.Vector3(x, 0, z));
+            this.platforms.push(new Platform("shapedPlatform", this.positions[i], scene));
+            this.platforms[i].setParent(this.pivotMesh);
+        }
+        /*
+        // shape polygon
+        let shapeMesh = new BABYLON.Mesh("shape", this._scene);
+        
+        let vertexData = new BABYLON.VertexData();
+        vertexData.positions = coordinates;
+        vertexData.indices = indices;
+        vertexData.applyToMesh(shapeMesh);
+
+        let mat = new BABYLON.StandardMaterial("mat", this._scene);
+        mat.diffuseColor = new BABYLON.Color3(1, 0, 1);
+        shapeMesh.material = mat;
+        */
+    }
+    return LayoutShape;
 }());

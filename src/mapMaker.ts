@@ -27,6 +27,7 @@ class Game {
 
     createScene() : void {
         this._scene = new BABYLON.Scene(this._engine);
+        this._scene.metadata = {steps:[]};
 
         this._camera = new BABYLON.ArcRotateCamera("perspective_default", Math.PI/4, Math.PI/4, 
                                                     20, new BABYLON.Vector3(0,0,0), this._scene);
@@ -37,18 +38,17 @@ class Game {
         this._camera.attachControl(this._canvas, false);
 
         this._light = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(0,1,0), this._scene);
-/*
-        // Create a built-in "ground" shape.
+
         let ground = BABYLON.MeshBuilder.CreateGround('Grid',
                                 {width: 20, height: 20, subdivisions: 20}, this._scene);
         ground.material = new BABYLON.StandardMaterial("GridMaterial", this._scene);
         ground.material.wireframe = true;
-        ground.material.backFaceCulling = true;
+        ground.material.backFaceCulling = false;
         //ground.material.diffuseColor = new BABYLON.Color3(1, 1, 1);
         ground.isPickable = false;
         // ground.data = {uid: -1, type: 'staticSceneObject'}; // not sure what this is for
-        */
-        // ---------------------------------
+        
+        // GUI ---------------------------------
         let guiTex = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
         let panel = new BABYLON.GUI.StackPanel();
@@ -70,43 +70,20 @@ class Game {
         platformBtn.height = "40px";
         platformBtn.color = "white";
         platformBtn.cornerRadius = 20;
-        platformBtn.background = "red";
+        platformBtn.background = "orange";
         platformBtn.onPointerUpObservable.add(() => this.addPlatform());
         panel.addControl(platformBtn);
+        
         //****
-        //this._scene.onPointerObservable.add(handlePointer);
-       // this._editControl = this.attachEditControl(ground);
+        //this._scene.onPointerObservable.add(handlePointer); //forgot where this came from.. EditControl??
+        this._editControl = this.attachEditControl(ground);
         
         // ---------------------------------
 
         //this.addPlatform();
-
-        let positions = [];
-        let indices = [];
-        let numSides = 5;
-        let angle = 2 * Math.PI / numSides;
-        let radius = 5;
-        for (let i=0; i<numSides; i++)
-        {
-            let x = radius * Math.sin(i * angle);
-            let z = radius * Math.cos(i * angle);
-            positions.push(x,0,z);
-            indices.push(i);
-            let sphere = BABYLON.MeshBuilder.CreateSphere('sphere', {segments:16, diameter:2}, this._scene);
-            sphere.position.x = x;
-            sphere.position.z = z;
-        }
-        console.log(positions);
-        let customMesh = new BABYLON.Mesh("custom", this._scene);
+        let startingShape = new LayoutShape(5, this._scene);
+        this._editControl.switchTo(startingShape.pivotMesh);
         
-        let vertexData = new BABYLON.VertexData();
-        vertexData.positions = positions;
-        vertexData.indices = indices;
-        vertexData.applyToMesh(customMesh);
-
-        let mat = new BABYLON.StandardMaterial("mat", this._scene);
-	    mat.diffuseColor = new BABYLON.Color3(1, 0, 1);
-	    customMesh.material = mat;
     }
 
     doRender() : void {
@@ -122,12 +99,12 @@ class Game {
     }
 
 // ----------------------------------------------------------
-    addPlatform() : void 
+    
+    addPlatform(position = new BABYLON.Vector3(0,0,0)) : void // make static method of Platform?
     {
-        let name = "platform";
-        name += this.platformCount;
-        console.log(name);
-        let p = new Platform(name,new BABYLON.Vector3(0,0,0), this._scene);
+        let id = "platform";
+        id += this.platformCount;
+        let p = new Platform(id,new BABYLON.Vector3(0,0,0), this._scene);
         this.platformCount ++;
         this._editControl.switchTo(p.transform);
     }
@@ -170,8 +147,8 @@ class Game {
         if (pick != null && pick.hit)
         {
             mesh = pick.pickedMesh;
-            // edit via transform node, re: Platform class .. despite type complaint
-            this._editControl.switchTo(mesh.parent); 
+            // edit via transform node, re: Platform class? .. despite type complaint
+            this._editControl.switchTo(mesh); 
             console.log("Picked", mesh);
         }       
     }
@@ -193,7 +170,7 @@ window.addEventListener('DOMContentLoaded', () => {
 // maybe use this transform node setup for parenting/grouping ??
 class Platform
 {
-    transform:BABYLON.TransformNode;
+    transform:BABYLON.TransformNode; // maybe not...
     mesh:BABYLON.Mesh;
 
     constructor(id:string, position:BABYLON.Vector3, scene:BABYLON.Scene)
@@ -207,5 +184,50 @@ class Platform
     setParent(target:BABYLON.TransformNode)
     {
         this.transform.parent = target;
+    }
+
+}
+
+class LayoutShape
+{
+    coordinates : number[] = [];
+    indices : number[] = [];
+    positions : BABYLON.Vector3[] = [];
+    platforms : Platform[] = [];
+
+    pivotMesh : BABYLON.Mesh;
+
+    constructor(numSides:number, scene:BABYLON.Scene, pivot = new BABYLON.Vector3(0,0,0), radius = 5)
+    {
+        this.pivotMesh = BABYLON.MeshBuilder.CreateSphere('pivotMesh', {segments:1, diameter:1}, this._scene);
+        this.pivotMesh.position = pivot;
+        
+        let angle = 2 * Math.PI / numSides;
+        
+        for (let i=0; i<numSides; i++)
+        {
+            let x = radius * Math.sin(i * angle);
+            let z = radius * Math.cos(i * angle);
+        
+            this.coordinates.push(x,0,z);
+            this.indices.push(i);
+            this.positions.push(new BABYLON.Vector3(x,0,z));
+        
+            this.platforms.push(new Platform("shapedPlatform", this.positions[i], scene))
+            this.platforms[i].setParent(this.pivotMesh);
+        }
+        /*
+        // shape polygon
+        let shapeMesh = new BABYLON.Mesh("shape", this._scene);
+        
+        let vertexData = new BABYLON.VertexData();
+        vertexData.positions = coordinates;
+        vertexData.indices = indices;
+        vertexData.applyToMesh(shapeMesh);
+
+        let mat = new BABYLON.StandardMaterial("mat", this._scene);
+	    mat.diffuseColor = new BABYLON.Color3(1, 0, 1);
+        shapeMesh.material = mat;
+        */
     }
 }
