@@ -51,10 +51,14 @@ class Game {
         // GUI ---------------------------------
         let guiTex = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
-        let panel = new BABYLON.GUI.StackPanel();
-        panel.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-        panel.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
-        guiTex.addControl(panel);
+        let metaPanel = new BABYLON.GUI.StackPanel();
+        metaPanel.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        metaPanel.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        guiTex.addControl(metaPanel);
+
+        // --
+        let topPanel = new BABYLON.GUI.StackPanel();
+        metaPanel.addControl(topPanel);
 
         let saveBtn = BABYLON.GUI.Button.CreateSimpleButton("saveBtn", "Save Map");
         saveBtn.width = "150px"
@@ -63,7 +67,7 @@ class Game {
         saveBtn.cornerRadius = 20;
         saveBtn.background = "green";
         saveBtn.onPointerUpObservable.add(() => this.saveScene());
-        panel.addControl(saveBtn);
+        topPanel.addControl(saveBtn);
 
         let platformBtn = BABYLON.GUI.Button.CreateSimpleButton("platformBtn", "Add Platform");
         platformBtn.width = "150px"
@@ -72,8 +76,39 @@ class Game {
         platformBtn.cornerRadius = 20;
         platformBtn.background = "orange";
         platformBtn.onPointerUpObservable.add(() => this.addPlatform());
-        panel.addControl(platformBtn);
+        topPanel.addControl(platformBtn);
         
+        // --
+        let transformPanel = new BABYLON.GUI.StackPanel();
+        metaPanel.addControl(transformPanel);
+
+        let translateBtn = BABYLON.GUI.Button.CreateSimpleButton("translateBtn", "Translate");
+        translateBtn.width = "100px"
+        translateBtn.height = "40px";
+        translateBtn.color = "white";
+        translateBtn.cornerRadius = 20;
+        translateBtn.background = "blue";
+        translateBtn.onPointerUpObservable.add(() => {this._editControl.enableTranslation()});
+        transformPanel.addControl(translateBtn);
+
+        let rotateBtn = BABYLON.GUI.Button.CreateSimpleButton("rotateBtn", "Rotate");
+        rotateBtn.width = "100px"
+        rotateBtn.height = "40px";
+        rotateBtn.color = "white";
+        rotateBtn.cornerRadius = 20;
+        rotateBtn.background = "blue";
+        rotateBtn.onPointerUpObservable.add(() => {this._editControl.enableRotation()});
+        transformPanel.addControl(rotateBtn);
+
+        let scaleBtn = BABYLON.GUI.Button.CreateSimpleButton("scaleBtn", "Scale");
+        scaleBtn.width = "100px"
+        scaleBtn.height = "40px";
+        scaleBtn.color = "white";
+        scaleBtn.cornerRadius = 20;
+        scaleBtn.background = "blue";
+        scaleBtn.onPointerUpObservable.add(() => {this._editControl.enableScaling()});
+        transformPanel.addControl(scaleBtn);
+
         //****
         //this._scene.onPointerObservable.add(handlePointer); //forgot where this came from.. EditControl??
         this._editControl = this.attachEditControl(ground);
@@ -106,7 +141,7 @@ class Game {
         id += this.platformCount;
         let p = new Platform(id,new BABYLON.Vector3(0,0,0), this._scene);
         this.platformCount ++;
-        this._editControl.switchTo(p.transform);
+        this._editControl.switchTo(p.mesh);
     }
 
     saveScene() : void 
@@ -170,7 +205,7 @@ window.addEventListener('DOMContentLoaded', () => {
 // maybe use this transform node setup for parenting/grouping ??
 class Platform
 {
-    transform:BABYLON.TransformNode; // maybe not...
+    transform:BABYLON.TransformNode; // maybe not necessary w/ mesh parenting available already
     mesh:BABYLON.Mesh;
 
     constructor(id:string, position:BABYLON.Vector3, scene:BABYLON.Scene)

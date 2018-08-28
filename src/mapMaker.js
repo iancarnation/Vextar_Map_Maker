@@ -32,10 +32,13 @@ var Game = /** @class */ (function () {
         // ground.data = {uid: -1, type: 'staticSceneObject'}; // not sure what this is for
         // GUI ---------------------------------
         var guiTex = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
-        var panel = new BABYLON.GUI.StackPanel();
-        panel.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-        panel.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
-        guiTex.addControl(panel);
+        var metaPanel = new BABYLON.GUI.StackPanel();
+        metaPanel.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        metaPanel.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        guiTex.addControl(metaPanel);
+        // --
+        var topPanel = new BABYLON.GUI.StackPanel();
+        metaPanel.addControl(topPanel);
         var saveBtn = BABYLON.GUI.Button.CreateSimpleButton("saveBtn", "Save Map");
         saveBtn.width = "150px";
         saveBtn.height = "40px";
@@ -43,7 +46,7 @@ var Game = /** @class */ (function () {
         saveBtn.cornerRadius = 20;
         saveBtn.background = "green";
         saveBtn.onPointerUpObservable.add(function () { return _this.saveScene(); });
-        panel.addControl(saveBtn);
+        topPanel.addControl(saveBtn);
         var platformBtn = BABYLON.GUI.Button.CreateSimpleButton("platformBtn", "Add Platform");
         platformBtn.width = "150px";
         platformBtn.height = "40px";
@@ -51,7 +54,34 @@ var Game = /** @class */ (function () {
         platformBtn.cornerRadius = 20;
         platformBtn.background = "orange";
         platformBtn.onPointerUpObservable.add(function () { return _this.addPlatform(); });
-        panel.addControl(platformBtn);
+        topPanel.addControl(platformBtn);
+        // --
+        var transformPanel = new BABYLON.GUI.StackPanel();
+        metaPanel.addControl(transformPanel);
+        var translateBtn = BABYLON.GUI.Button.CreateSimpleButton("translateBtn", "Translate");
+        translateBtn.width = "100px";
+        translateBtn.height = "40px";
+        translateBtn.color = "white";
+        translateBtn.cornerRadius = 20;
+        translateBtn.background = "blue";
+        translateBtn.onPointerUpObservable.add(function () { _this._editControl.enableTranslation(); });
+        transformPanel.addControl(translateBtn);
+        var rotateBtn = BABYLON.GUI.Button.CreateSimpleButton("rotateBtn", "Rotate");
+        rotateBtn.width = "100px";
+        rotateBtn.height = "40px";
+        rotateBtn.color = "white";
+        rotateBtn.cornerRadius = 20;
+        rotateBtn.background = "blue";
+        rotateBtn.onPointerUpObservable.add(function () { _this._editControl.enableRotation(); });
+        transformPanel.addControl(rotateBtn);
+        var scaleBtn = BABYLON.GUI.Button.CreateSimpleButton("scaleBtn", "Scale");
+        scaleBtn.width = "100px";
+        scaleBtn.height = "40px";
+        scaleBtn.color = "white";
+        scaleBtn.cornerRadius = 20;
+        scaleBtn.background = "blue";
+        scaleBtn.onPointerUpObservable.add(function () { _this._editControl.enableScaling(); });
+        transformPanel.addControl(scaleBtn);
         //****
         //this._scene.onPointerObservable.add(handlePointer); //forgot where this came from.. EditControl??
         this._editControl = this.attachEditControl(ground);
@@ -78,7 +108,7 @@ var Game = /** @class */ (function () {
         id += this.platformCount;
         var p = new Platform(id, new BABYLON.Vector3(0, 0, 0), this._scene);
         this.platformCount++;
-        this._editControl.switchTo(p.transform);
+        this._editControl.switchTo(p.mesh);
     };
     Game.prototype.saveScene = function () {
         var filename = 'scene.json';
