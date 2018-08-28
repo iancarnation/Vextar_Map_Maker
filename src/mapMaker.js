@@ -47,6 +47,14 @@ var Game = /** @class */ (function () {
         saveBtn.background = "green";
         saveBtn.onPointerUpObservable.add(function () { return _this.saveScene(); });
         topPanel.addControl(saveBtn);
+        var undoBtn = BABYLON.GUI.Button.CreateSimpleButton("undoBtn", "Undo");
+        undoBtn.width = "150px";
+        undoBtn.height = "40px";
+        undoBtn.color = "white";
+        undoBtn.cornerRadius = 20;
+        undoBtn.background = "red";
+        undoBtn.onPointerUpObservable.add(function () { return _this._editControl.undo(); });
+        topPanel.addControl(undoBtn);
         var platformBtn = BABYLON.GUI.Button.CreateSimpleButton("platformBtn", "Add Platform");
         platformBtn.width = "150px";
         platformBtn.height = "40px";
@@ -64,7 +72,7 @@ var Game = /** @class */ (function () {
         translateBtn.color = "white";
         translateBtn.cornerRadius = 20;
         translateBtn.background = "blue";
-        translateBtn.onPointerUpObservable.add(function () { _this._editControl.enableTranslation(); });
+        translateBtn.onPointerUpObservable.add(function () { return _this._editControl.enableTranslation(); });
         transformPanel.addControl(translateBtn);
         var rotateBtn = BABYLON.GUI.Button.CreateSimpleButton("rotateBtn", "Rotate");
         rotateBtn.width = "100px";
@@ -72,15 +80,16 @@ var Game = /** @class */ (function () {
         rotateBtn.color = "white";
         rotateBtn.cornerRadius = 20;
         rotateBtn.background = "blue";
-        rotateBtn.onPointerUpObservable.add(function () { _this._editControl.enableRotation(); });
+        rotateBtn.onPointerUpObservable.add(function () { return _this._editControl.enableRotation(); });
         transformPanel.addControl(rotateBtn);
+        // TODO: scale only the shape, not the platforms
         var scaleBtn = BABYLON.GUI.Button.CreateSimpleButton("scaleBtn", "Scale");
         scaleBtn.width = "100px";
         scaleBtn.height = "40px";
         scaleBtn.color = "white";
         scaleBtn.cornerRadius = 20;
         scaleBtn.background = "blue";
-        scaleBtn.onPointerUpObservable.add(function () { _this._editControl.enableScaling(); });
+        scaleBtn.onPointerUpObservable.add(function () { return _this._editControl.enableScaling(); });
         transformPanel.addControl(scaleBtn);
         //****
         //this._scene.onPointerObservable.add(handlePointer); //forgot where this came from.. EditControl??
@@ -131,14 +140,14 @@ var Game = /** @class */ (function () {
         /*      ec.addActionStartListener(actionStartListener);
                 ec.addActionListener(actionListener);
                 ec.addActionEndListener(actionEndListener);
-         */
+        */
         console.log(ec.isHidden());
         return ec;
     };
     Game.prototype.onPointerUp = function (evt) {
         var pick = this._scene.pick(this._scene.pointerX, this._scene.pointerY);
         var mesh;
-        if (pick != null && pick.hit) {
+        if (pick != null && pick.hit && !this._editControl.isEditing()) {
             mesh = pick.pickedMesh;
             // edit via transform node, re: Platform class? .. despite type complaint
             this._editControl.switchTo(mesh);
@@ -177,7 +186,7 @@ var LayoutShape = /** @class */ (function () {
         this.indices = [];
         this.positions = [];
         this.platforms = [];
-        this.pivotMesh = BABYLON.MeshBuilder.CreateSphere('pivotMesh', { segments: 1, diameter: 1 }, this._scene);
+        this.pivotMesh = BABYLON.MeshBuilder.CreateSphere('pivotMesh', { segments: 1, diameter: 1 }, scene);
         this.pivotMesh.position = pivot;
         var angle = 2 * Math.PI / numSides;
         for (var i = 0; i < numSides; i++) {

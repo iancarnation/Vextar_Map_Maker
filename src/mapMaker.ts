@@ -69,6 +69,15 @@ class Game {
         saveBtn.onPointerUpObservable.add(() => this.saveScene());
         topPanel.addControl(saveBtn);
 
+        let undoBtn = BABYLON.GUI.Button.CreateSimpleButton("undoBtn", "Undo");
+        undoBtn.width = "150px"
+        undoBtn.height = "40px";
+        undoBtn.color = "white";
+        undoBtn.cornerRadius = 20;
+        undoBtn.background = "red";
+        undoBtn.onPointerUpObservable.add(() => this._editControl.undo());
+        topPanel.addControl(undoBtn);
+
         let platformBtn = BABYLON.GUI.Button.CreateSimpleButton("platformBtn", "Add Platform");
         platformBtn.width = "150px"
         platformBtn.height = "40px";
@@ -88,7 +97,7 @@ class Game {
         translateBtn.color = "white";
         translateBtn.cornerRadius = 20;
         translateBtn.background = "blue";
-        translateBtn.onPointerUpObservable.add(() => {this._editControl.enableTranslation()});
+        translateBtn.onPointerUpObservable.add(() => this._editControl.enableTranslation());
         transformPanel.addControl(translateBtn);
 
         let rotateBtn = BABYLON.GUI.Button.CreateSimpleButton("rotateBtn", "Rotate");
@@ -97,16 +106,17 @@ class Game {
         rotateBtn.color = "white";
         rotateBtn.cornerRadius = 20;
         rotateBtn.background = "blue";
-        rotateBtn.onPointerUpObservable.add(() => {this._editControl.enableRotation()});
+        rotateBtn.onPointerUpObservable.add(() => this._editControl.enableRotation());
         transformPanel.addControl(rotateBtn);
-
+        
+        // TODO: scale only the shape, not the platforms
         let scaleBtn = BABYLON.GUI.Button.CreateSimpleButton("scaleBtn", "Scale");
         scaleBtn.width = "100px"
         scaleBtn.height = "40px";
         scaleBtn.color = "white";
         scaleBtn.cornerRadius = 20;
         scaleBtn.background = "blue";
-        scaleBtn.onPointerUpObservable.add(() => {this._editControl.enableScaling()});
+        scaleBtn.onPointerUpObservable.add(() => this._editControl.enableScaling());
         transformPanel.addControl(scaleBtn);
 
         //****
@@ -170,7 +180,7 @@ class Game {
 /*      ec.addActionStartListener(actionStartListener);
         ec.addActionListener(actionListener);
         ec.addActionEndListener(actionEndListener);
- */
+*/
         console.log(ec.isHidden());
         return ec;
     }
@@ -179,7 +189,7 @@ class Game {
     {
         let pick = this._scene.pick(this._scene.pointerX, this._scene.pointerY);
         let mesh:BABYLON.Mesh;
-        if (pick != null && pick.hit)
+        if (pick != null && pick.hit && !this._editControl.isEditing())
         {
             mesh = pick.pickedMesh;
             // edit via transform node, re: Platform class? .. despite type complaint
@@ -234,7 +244,7 @@ class LayoutShape
 
     constructor(numSides:number, scene:BABYLON.Scene, pivot = new BABYLON.Vector3(0,0,0), radius = 5)
     {
-        this.pivotMesh = BABYLON.MeshBuilder.CreateSphere('pivotMesh', {segments:1, diameter:1}, this._scene);
+        this.pivotMesh = BABYLON.MeshBuilder.CreateSphere('pivotMesh', {segments:1, diameter:1}, scene);
         this.pivotMesh.position = pivot;
         
         let angle = 2 * Math.PI / numSides;
