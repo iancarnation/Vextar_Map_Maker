@@ -5,10 +5,12 @@ var EditControl = org.ssatguru.babylonjs.component.EditControl;
 var Game = /** @class */ (function () {
     function Game(canvasElement) {
         var _this = this;
+        this._container = [];
         this.platformCount = 0;
         // Create canvas and engine.
         this._canvas = document.getElementById(canvasElement);
         this._engine = new BABYLON.Engine(this._canvas, true);
+        //this._engine.enableOfflineSupport = false; // to stop .manifest 404 error
         this._pointerup = function (evt) { return _this.onPointerUp(evt); };
         this._canvas.addEventListener("pointerup", this._pointerup, false);
     }
@@ -30,6 +32,20 @@ var Game = /** @class */ (function () {
         //ground.material.diffuseColor = new BABYLON.Color3(1, 1, 1);
         ground.isPickable = false;
         // ground.data = {uid: -1, type: 'staticSceneObject'}; // not sure what this is for
+        // --------------
+        /*
+        BABYLON.SceneLoader.LoadAssetContainer("assets/", "platform.babylon", this._scene, function (_container) {
+            var meshes = _container.meshes;
+            var materials = _container.materials;
+            //...
+            console.log(_container);
+            // Adds all elements to the scene
+            _container.addAllToScene();
+        });
+        */
+        BABYLON.SceneLoader.ImportMesh("", "assets/", "platform.babylon", this._scene, function (meshes) {
+            meshes[0].scaling = new BABYLON.Vector3(0.01, 0.01, 0.01);
+        });
         // GUI ---------------------------------
         var guiTex = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
         var metaPanel = new BABYLON.GUI.StackPanel();
