@@ -15,8 +15,6 @@ class Game {
     
     private _editControl: EditControl;
 
-    private _container = [];
-
     constructor(canvasElement : string) {
         // Create canvas and engine.
         this._canvas = document.getElementById(canvasElement) as HTMLCanvasElement;
@@ -59,6 +57,7 @@ class Game {
         skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
         skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
         skybox.material = skyboxMaterial;
+        skybox.isPickable = false;
 
         /*
         // -------------- alternative for mesh loading w/out appending
@@ -161,11 +160,12 @@ class Game {
         this._editControl = this.attachEditControl(ground);
 
         // ---------------------------------    
-        //this.addPlatform();
-        if(PLATFORM) {this.addLayoutShape();}
-        
-        
-        
+        if (PLATFORM) // need to wait for loading.. this doesn't quite do it
+        {
+            let p = new Platform(); 
+            this._editControl = this.attachEditControl(p.mesh);
+        }    
+                
     }
 
     doRender() : void {
@@ -188,11 +188,11 @@ class Game {
         this._editControl.switchTo(startingShape.pivotMesh);
     }
 
-    addPlatform(position = new BABYLON.Vector3(0,0,0)) : void // make static method of Platform?
+    addPlatform() : void // make static method of Platform?
     {
         let id = "platform";
         //id += this.platformCount;
-        let p = new Platform(id,new BABYLON.Vector3(0,0,0), this._scene);
+        let p = new Platform();
         //this.platformCount ++;
         this._editControl.switchTo(p.mesh);
     }
@@ -235,9 +235,7 @@ class Game {
         if (pick != null && pick.hit && !this._editControl.isEditing())
         {
             mesh = pick.pickedMesh;
-            // edit via transform node, re: Platform class? .. despite type complaint
-            this._editControl.switchTo(mesh); 
-            console.log("Picked", mesh);
+            this._editControl.switchTo(mesh);             
         }       
     }
 }
@@ -258,22 +256,13 @@ window.addEventListener('DOMContentLoaded', () => {
 // maybe use this transform node setup for parenting/grouping ??
 class Platform
 {
-    transform:BABYLON.TransformNode; // maybe not necessary w/ mesh parenting available already
     mesh:BABYLON.Mesh;
 
-    constructor(id:string, position:BABYLON.Vector3, scene:BABYLON.Scene)
+    constructor(position = new BABYLON.Vector3(0,0,0) )
     {
-        this.transform = new BABYLON.TransformNode(id, scene);
-        this.transform.position = position;
-        this.mesh = BABYLON.MeshBuilder.CreateCylinder(id, {height: 0.5, diameter: 4}, scene);
-        this.mesh.parent = this.transform;
+        this.mesh = PLATFORM.createInstance("platform");
+        this.mesh.position = position;
     }
-
-    setParent(target:BABYLON.TransformNode)
-    {
-        this.transform.parent = target;
-    }
-
 }
 
 class LayoutShape

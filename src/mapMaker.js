@@ -6,7 +6,6 @@ var PLATFORM;
 var Game = /** @class */ (function () {
     function Game(canvasElement) {
         var _this = this;
-        this._container = [];
         // Create canvas and engine.
         this._canvas = document.getElementById(canvasElement);
         this._engine = new BABYLON.Engine(this._canvas, true);
@@ -40,6 +39,7 @@ var Game = /** @class */ (function () {
         skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
         skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
         skybox.material = skyboxMaterial;
+        skybox.isPickable = false;
         /*
         // -------------- alternative for mesh loading w/out appending
         BABYLON.SceneLoader.LoadAssetContainer("assets/", "platform.babylon", this._scene, function (_container) {
@@ -129,9 +129,10 @@ var Game = /** @class */ (function () {
         //this._scene.onPointerObservable.add(handlePointer); //forgot where this came from.. EditControl??
         this._editControl = this.attachEditControl(ground);
         // ---------------------------------    
-        //this.addPlatform();
-        if (PLATFORM) {
-            this.addLayoutShape();
+        if (PLATFORM) // need to wait for loading.. this doesn't quite do it
+         {
+            var p = new Platform();
+            this._editControl = this.attachEditControl(p.mesh);
         }
     };
     Game.prototype.doRender = function () {
@@ -150,11 +151,10 @@ var Game = /** @class */ (function () {
         var startingShape = new LayoutShape(5, this._scene);
         this._editControl.switchTo(startingShape.pivotMesh);
     };
-    Game.prototype.addPlatform = function (position) {
-        if (position === void 0) { position = new BABYLON.Vector3(0, 0, 0); }
+    Game.prototype.addPlatform = function () {
         var id = "platform";
         //id += this.platformCount;
-        var p = new Platform(id, new BABYLON.Vector3(0, 0, 0), this._scene);
+        var p = new Platform();
         //this.platformCount ++;
         this._editControl.switchTo(p.mesh);
     };
@@ -188,9 +188,7 @@ var Game = /** @class */ (function () {
         var mesh;
         if (pick != null && pick.hit && !this._editControl.isEditing()) {
             mesh = pick.pickedMesh;
-            // edit via transform node, re: Platform class? .. despite type complaint
             this._editControl.switchTo(mesh);
-            console.log("Picked", mesh);
         }
     };
     return Game;
@@ -206,15 +204,11 @@ window.addEventListener('DOMContentLoaded', function () {
 });
 // maybe use this transform node setup for parenting/grouping ??
 var Platform = /** @class */ (function () {
-    function Platform(id, position, scene) {
-        this.transform = new BABYLON.TransformNode(id, scene);
-        this.transform.position = position;
-        this.mesh = BABYLON.MeshBuilder.CreateCylinder(id, { height: 0.5, diameter: 4 }, scene);
-        this.mesh.parent = this.transform;
+    function Platform(position) {
+        if (position === void 0) { position = new BABYLON.Vector3(0, 0, 0); }
+        this.mesh = PLATFORM.createInstance("platform");
+        this.mesh.position = position;
     }
-    Platform.prototype.setParent = function (target) {
-        this.transform.parent = target;
-    };
     return Platform;
 }());
 var LayoutShape = /** @class */ (function () {
