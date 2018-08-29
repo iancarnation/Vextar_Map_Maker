@@ -2,11 +2,11 @@
 ///<reference path="babylon.d.ts" />
 ///<reference path="babylon.gui.d.ts" />
 var EditControl = org.ssatguru.babylonjs.component.EditControl;
+var PLATFORM;
 var Game = /** @class */ (function () {
     function Game(canvasElement) {
         var _this = this;
         this._container = [];
-        this.platformCount = 0;
         // Create canvas and engine.
         this._canvas = document.getElementById(canvasElement);
         this._engine = new BABYLON.Engine(this._canvas, true);
@@ -51,8 +51,10 @@ var Game = /** @class */ (function () {
             _container.addAllToScene();
         });
         */
-        BABYLON.SceneLoader.ImportMesh("", "assets/", "platform.babylon", this._scene, function (meshes) {
-            meshes[0].scaling = new BABYLON.Vector3(0.01, 0.01, 0.01);
+        BABYLON.SceneLoader.ImportMesh("", "assets/", "platform.babylon", this._scene, function (newMeshes) {
+            var p = newMeshes[0];
+            newMeshes[0].scaling = new BABYLON.Vector3(0.01, 0.01, 0.01);
+            PLATFORM = p;
         });
         // GUI ---------------------------------
         var guiTex = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
@@ -87,6 +89,14 @@ var Game = /** @class */ (function () {
         platformBtn.background = "orange";
         platformBtn.onPointerUpObservable.add(function () { return _this.addPlatform(); });
         topPanel.addControl(platformBtn);
+        var layoutShapeBtn = BABYLON.GUI.Button.CreateSimpleButton("layoutShapeBtn", "Add Layout Shape");
+        layoutShapeBtn.width = "150px";
+        layoutShapeBtn.height = "40px";
+        layoutShapeBtn.color = "white";
+        layoutShapeBtn.cornerRadius = 20;
+        layoutShapeBtn.background = "magenta";
+        layoutShapeBtn.onPointerUpObservable.add(function () { return _this.addLayoutShape(); });
+        topPanel.addControl(layoutShapeBtn);
         // --
         var transformPanel = new BABYLON.GUI.StackPanel();
         metaPanel.addControl(transformPanel);
@@ -118,10 +128,11 @@ var Game = /** @class */ (function () {
         //****
         //this._scene.onPointerObservable.add(handlePointer); //forgot where this came from.. EditControl??
         this._editControl = this.attachEditControl(ground);
-        // ---------------------------------
+        // ---------------------------------    
         //this.addPlatform();
-        var startingShape = new LayoutShape(5, this._scene);
-        this._editControl.switchTo(startingShape.pivotMesh);
+        if (PLATFORM) {
+            this.addLayoutShape();
+        }
     };
     Game.prototype.doRender = function () {
         var _this = this;
@@ -135,12 +146,16 @@ var Game = /** @class */ (function () {
         });
     };
     // ----------------------------------------------------------
+    Game.prototype.addLayoutShape = function () {
+        var startingShape = new LayoutShape(5, this._scene);
+        this._editControl.switchTo(startingShape.pivotMesh);
+    };
     Game.prototype.addPlatform = function (position) {
         if (position === void 0) { position = new BABYLON.Vector3(0, 0, 0); }
         var id = "platform";
-        id += this.platformCount;
+        //id += this.platformCount;
         var p = new Platform(id, new BABYLON.Vector3(0, 0, 0), this._scene);
-        this.platformCount++;
+        //this.platformCount ++;
         this._editControl.switchTo(p.mesh);
     };
     Game.prototype.saveScene = function () {
@@ -219,7 +234,9 @@ var LayoutShape = /** @class */ (function () {
             this.coordinates.push(x, 0, z);
             this.indices.push(i);
             this.positions.push(new BABYLON.Vector3(x, 0, z));
-            this.platforms.push(new Platform("shapedPlatform", this.positions[i], scene));
+            var p = PLATFORM.createInstance("platform");
+            p.position = this.positions[i];
+            this.platforms.push(p);
             this.platforms[i].setParent(this.pivotMesh);
         }
         /*

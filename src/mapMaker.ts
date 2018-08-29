@@ -2,9 +2,11 @@
 ///<reference path="babylon.gui.d.ts" />
 import EditControl = org.ssatguru.babylonjs.component.EditControl;
 
+var PLATFORM;
+
 class Game {
     private _canvas: HTMLCanvasElement;
-    private _engine: BABYLON.Engine;
+    private _engine: BABYLON.Engine;        
     private _scene: BABYLON.Scene;
     private _camera: BABYLON.ArcRotateCamera;
     private _light: BABYLON.Light;
@@ -14,8 +16,6 @@ class Game {
     private _editControl: EditControl;
 
     private _container = [];
-
-    platformCount = 0;
 
     constructor(canvasElement : string) {
         // Create canvas and engine.
@@ -71,9 +71,11 @@ class Game {
             _container.addAllToScene();
         });
         */ 
-       BABYLON.SceneLoader.ImportMesh("", "assets/", "platform.babylon", this._scene, function (meshes) {
-           meshes[0].scaling = new BABYLON.Vector3(0.01,0.01,0.01);
-       });
+        BABYLON.SceneLoader.ImportMesh("", "assets/", "platform.babylon", this._scene, function (newMeshes) {
+            let p = newMeshes[0];
+            newMeshes[0].scaling = new BABYLON.Vector3(0.01,0.01,0.01);
+            PLATFORM = p;
+        });
         // GUI ---------------------------------
         let guiTex = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
@@ -112,7 +114,16 @@ class Game {
         platformBtn.background = "orange";
         platformBtn.onPointerUpObservable.add(() => this.addPlatform());
         topPanel.addControl(platformBtn);
-        
+
+        let layoutShapeBtn = BABYLON.GUI.Button.CreateSimpleButton("layoutShapeBtn", "Add Layout Shape");
+        layoutShapeBtn.width = "150px"
+        layoutShapeBtn.height = "40px";
+        layoutShapeBtn.color = "white";
+        layoutShapeBtn.cornerRadius = 20;
+        layoutShapeBtn.background = "magenta";
+        layoutShapeBtn.onPointerUpObservable.add(() => this.addLayoutShape());
+        topPanel.addControl(layoutShapeBtn);
+
         // --
         let transformPanel = new BABYLON.GUI.StackPanel();
         metaPanel.addControl(transformPanel);
@@ -134,7 +145,7 @@ class Game {
         rotateBtn.background = "blue";
         rotateBtn.onPointerUpObservable.add(() => this._editControl.enableRotation());
         transformPanel.addControl(rotateBtn);
-        
+
         // TODO: scale only the shape, not the platforms
         let scaleBtn = BABYLON.GUI.Button.CreateSimpleButton("scaleBtn", "Scale");
         scaleBtn.width = "100px"
@@ -148,12 +159,12 @@ class Game {
         //****
         //this._scene.onPointerObservable.add(handlePointer); //forgot where this came from.. EditControl??
         this._editControl = this.attachEditControl(ground);
-        
-        // ---------------------------------
 
+        // ---------------------------------    
         //this.addPlatform();
-        let startingShape = new LayoutShape(5, this._scene);
-        this._editControl.switchTo(startingShape.pivotMesh);
+        if(PLATFORM) {this.addLayoutShape();}
+        
+        
         
     }
 
@@ -171,12 +182,18 @@ class Game {
 
 // ----------------------------------------------------------
     
+    addLayoutShape() : void 
+    {
+        let startingShape = new LayoutShape(5, this._scene);
+        this._editControl.switchTo(startingShape.pivotMesh);
+    }
+
     addPlatform(position = new BABYLON.Vector3(0,0,0)) : void // make static method of Platform?
     {
         let id = "platform";
-        id += this.platformCount;
+        //id += this.platformCount;
         let p = new Platform(id,new BABYLON.Vector3(0,0,0), this._scene);
-        this.platformCount ++;
+        //this.platformCount ++;
         this._editControl.switchTo(p.mesh);
     }
 
@@ -264,7 +281,7 @@ class LayoutShape
     coordinates : number[] = [];
     indices : number[] = [];
     positions : BABYLON.Vector3[] = [];
-    platforms : Platform[] = [];
+    platforms : BABYLON.InstancedMesh[] = [];
 
     pivotMesh : BABYLON.Mesh;
 
@@ -283,8 +300,9 @@ class LayoutShape
             this.coordinates.push(x,0,z);
             this.indices.push(i);
             this.positions.push(new BABYLON.Vector3(x,0,z));
-        
-            this.platforms.push(new Platform("shapedPlatform", this.positions[i], scene))
+            let p = PLATFORM.createInstance("platform");
+            p.position = this.positions[i];
+            this.platforms.push(p);
             this.platforms[i].setParent(this.pivotMesh);
         }
         /*
