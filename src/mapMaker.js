@@ -81,6 +81,14 @@ var Game = /** @class */ (function () {
         undoBtn.background = "red";
         undoBtn.onPointerUpObservable.add(function () { return _this._editControl.undo(); });
         topPanel.addControl(undoBtn);
+        var deleteBtn = BABYLON.GUI.Button.CreateSimpleButton("deleteBtn", "Delete");
+        deleteBtn.width = "150px";
+        deleteBtn.height = "40px";
+        deleteBtn.color = "white";
+        deleteBtn.cornerRadius = 20;
+        deleteBtn.background = "#942121";
+        deleteBtn.onPointerUpObservable.add(function () { _this._selectedMesh.dispose(); _this._editControl.hide(); });
+        topPanel.addControl(deleteBtn);
         var platformBtn = BABYLON.GUI.Button.CreateSimpleButton("platformBtn", "Add Platform");
         platformBtn.width = "150px";
         platformBtn.height = "40px";
@@ -148,12 +156,14 @@ var Game = /** @class */ (function () {
     };
     // ----------------------------------------------------------
     Game.prototype.addLayoutShape = function () {
-        var startingShape = new LayoutShape(5, this._scene);
+        var startingShape = new LayoutShape(20, this._scene);
         this._editControl.switchTo(startingShape.pivotMesh);
+        this._selectedMesh = startingShape.pivotMesh;
     };
     Game.prototype.addPlatform = function () {
         var p = new Platform(this._editControl.getPosition());
         this._editControl.switchTo(p.mesh);
+        this._selectedMesh = p.mesh;
     };
     Game.prototype.saveScene = function () {
         var filename = 'scene.json';
@@ -177,6 +187,7 @@ var Game = /** @class */ (function () {
                 ec.addActionListener(actionListener);
                 ec.addActionEndListener(actionEndListener);
         */
+        this._selectedMesh = mesh;
         console.log(ec.isHidden());
         return ec;
     };
@@ -186,6 +197,10 @@ var Game = /** @class */ (function () {
         if (pick != null && pick.hit && !this._editControl.isEditing()) {
             mesh = pick.pickedMesh;
             this._editControl.switchTo(mesh);
+            this._selectedMesh = mesh;
+        }
+        if (this._editControl.isHidden()) {
+            this._editControl.show();
         }
     };
     return Game;
@@ -211,7 +226,7 @@ var Platform = /** @class */ (function () {
 var LayoutShape = /** @class */ (function () {
     function LayoutShape(numSides, scene, pivot, radius) {
         if (pivot === void 0) { pivot = new BABYLON.Vector3(0, 0, 0); }
-        if (radius === void 0) { radius = 5; }
+        if (radius === void 0) { radius = 20; }
         this.coordinates = [];
         this.indices = [];
         this.positions = [];

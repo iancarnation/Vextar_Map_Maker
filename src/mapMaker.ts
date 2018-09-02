@@ -14,6 +14,7 @@ class Game {
     private _pointerup: EventListener; 
     
     private _editControl: EditControl;
+    private _selectedMesh: BABYLON.Mesh;
 
     constructor(canvasElement : string) {
         // Create canvas and engine.
@@ -105,6 +106,15 @@ class Game {
         undoBtn.onPointerUpObservable.add(() => this._editControl.undo());
         topPanel.addControl(undoBtn);
 
+        let deleteBtn = BABYLON.GUI.Button.CreateSimpleButton("deleteBtn", "Delete");
+        deleteBtn.width = "150px"
+        deleteBtn.height = "40px";
+        deleteBtn.color = "white";
+        deleteBtn.cornerRadius = 20;
+        deleteBtn.background = "#942121";
+        deleteBtn.onPointerUpObservable.add(() => {this._selectedMesh.dispose(); this._editControl.hide();});
+        topPanel.addControl(deleteBtn);
+
         let platformBtn = BABYLON.GUI.Button.CreateSimpleButton("platformBtn", "Add Platform");
         platformBtn.width = "150px"
         platformBtn.height = "40px";
@@ -182,16 +192,19 @@ class Game {
 
 // ----------------------------------------------------------
     
+
     addLayoutShape() : void 
     {
-        let startingShape = new LayoutShape(5, this._scene);
+        let startingShape = new LayoutShape(20, this._scene);
         this._editControl.switchTo(startingShape.pivotMesh);
+        this._selectedMesh = startingShape.pivotMesh;
     }
 
     addPlatform() : void // make static method of Platform?
     {
         let p = new Platform(this._editControl.getPosition());
         this._editControl.switchTo(p.mesh);
+        this._selectedMesh = p.mesh;
     }
 
     saveScene() : void 
@@ -221,6 +234,8 @@ class Game {
         ec.addActionListener(actionListener);
         ec.addActionEndListener(actionEndListener);
 */
+        this._selectedMesh = mesh;
+
         console.log(ec.isHidden());
         return ec;
     }
@@ -232,8 +247,13 @@ class Game {
         if (pick != null && pick.hit && !this._editControl.isEditing())
         {
             mesh = pick.pickedMesh;
-            this._editControl.switchTo(mesh);           
+            this._editControl.switchTo(mesh);
+            this._selectedMesh = mesh;
         }       
+        if (this._editControl.isHidden())
+        {
+            this._editControl.show();
+        }
     }
 }
 
@@ -271,7 +291,7 @@ class LayoutShape
 
     pivotMesh : BABYLON.Mesh;
 
-    constructor(numSides:number, scene:BABYLON.Scene, pivot = new BABYLON.Vector3(0,0,0), radius = 5)
+    constructor(numSides:number, scene:BABYLON.Scene, pivot = new BABYLON.Vector3(0,0,0), radius = 20)
     {
         this.pivotMesh = BABYLON.MeshBuilder.CreateSphere('pivotMesh', {segments:1, diameter:1}, scene);
         this.pivotMesh.position = pivot;
