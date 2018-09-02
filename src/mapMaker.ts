@@ -4,6 +4,7 @@ import EditControl = org.ssatguru.babylonjs.component.EditControl;
 
 var masterP;
 var PLATFORM;
+var layoutShapeSides_global = 5;
 
 class Game {
     private _canvas: HTMLCanvasElement;
@@ -72,7 +73,7 @@ class Game {
         });
         */
         
-
+        /*
         let ground = BABYLON.MeshBuilder.CreateGround('Grid',
                                 {width: 20, height: 20, subdivisions: 20}, this._scene);
         ground.material = new BABYLON.StandardMaterial("GridMaterial", this._scene);
@@ -81,6 +82,7 @@ class Game {
         //ground.material.diffuseColor = new BABYLON.Color3(1, 1, 1);
         ground.isPickable = false;
         // ground.data = {uid: -1, type: 'staticSceneObject'}; // not sure what this is for
+        */
 
         let skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:1000.0}, this._scene);
         let skyboxMaterial = new BABYLON.StandardMaterial("skyBox", this._scene);
@@ -150,6 +152,27 @@ class Game {
         layoutShapeBtn.onPointerUpObservable.add(() => this.addLayoutShape());
         topPanel.addControl(layoutShapeBtn);
 
+        let sliderPanel = new BABYLON.GUI.StackPanel();
+        topPanel.addControl(sliderPanel);
+
+        let slider = new BABYLON.GUI.Slider();
+        slider.minimum = 3;
+        slider.maximum = 20;
+        slider.value = layoutShapeSides_global;
+        slider.height = "20px";
+        slider.width = "200px";
+        slider.color = "grey";
+        slider.onValueChangedObservable.add(function(value) {
+            layoutShapeSides_global = value;
+        });
+        sliderPanel.addControl(slider);
+        //BABYLON.GUI.Control.AddHeader(layoutShapeBtn, "Sides: ", 5, { isHorizontal:true, controlFirst:true });
+        /*var header = new BABYLON.GUI.TextBlock();
+        header.text = "Sides: 5";
+        header.height = "30px";
+        header.color = "white";
+        header.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        sliderPanel.addControl(header);*/ 
         // --
         let transformPanel = new BABYLON.GUI.StackPanel();
         metaPanel.addControl(transformPanel);
@@ -226,7 +249,7 @@ class Game {
 
     addLayoutShape() : void 
     {
-        let startingShape = new LayoutShape(20, this._scene);
+        let startingShape = new LayoutShape(layoutShapeSides_global, this._scene);
         this._editControl.switchTo(startingShape.pivotMesh);
         this._selectedMesh = startingShape.pivotMesh;
     }
@@ -322,12 +345,14 @@ class LayoutShape
 
     pivotMesh : BABYLON.Mesh;
 
-    constructor(numSides:number, scene:BABYLON.Scene, pivot = new BABYLON.Vector3(0,0,0), radius = 20)
+    constructor(numSides:number, scene:BABYLON.Scene, pivot = new BABYLON.Vector3(0,0,0))
     {
         this.pivotMesh = BABYLON.MeshBuilder.CreateSphere('pivotMesh', {segments:1, diameter:1}, scene);
         this.pivotMesh.position = pivot;
         
         let angle = 2 * Math.PI / numSides;
+        let radius = numSides;
+       // if (radius < 5){radius = 5;}
         
         for (let i=0; i<numSides; i++)
         {

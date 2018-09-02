@@ -4,6 +4,7 @@
 var EditControl = org.ssatguru.babylonjs.component.EditControl;
 var masterP;
 var PLATFORM;
+var layoutShapeSides_global = 5;
 var Game = /** @class */ (function () {
     function Game(canvasElement) {
         var _this = this;
@@ -52,13 +53,16 @@ var Game = /** @class */ (function () {
             PLATFORM = p;
         });
         */
-        var ground = BABYLON.MeshBuilder.CreateGround('Grid', { width: 20, height: 20, subdivisions: 20 }, this._scene);
+        /*
+        let ground = BABYLON.MeshBuilder.CreateGround('Grid',
+                                {width: 20, height: 20, subdivisions: 20}, this._scene);
         ground.material = new BABYLON.StandardMaterial("GridMaterial", this._scene);
         ground.material.wireframe = true;
         ground.material.backFaceCulling = false;
         //ground.material.diffuseColor = new BABYLON.Color3(1, 1, 1);
         ground.isPickable = false;
         // ground.data = {uid: -1, type: 'staticSceneObject'}; // not sure what this is for
+        */
         var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 1000.0 }, this._scene);
         var skyboxMaterial = new BABYLON.StandardMaterial("skyBox", this._scene);
         skyboxMaterial.backFaceCulling = false;
@@ -117,6 +121,26 @@ var Game = /** @class */ (function () {
         layoutShapeBtn.background = "magenta";
         layoutShapeBtn.onPointerUpObservable.add(function () { return _this.addLayoutShape(); });
         topPanel.addControl(layoutShapeBtn);
+        var sliderPanel = new BABYLON.GUI.StackPanel();
+        topPanel.addControl(sliderPanel);
+        var slider = new BABYLON.GUI.Slider();
+        slider.minimum = 3;
+        slider.maximum = 20;
+        slider.value = layoutShapeSides_global;
+        slider.height = "20px";
+        slider.width = "200px";
+        slider.color = "grey";
+        slider.onValueChangedObservable.add(function (value) {
+            layoutShapeSides_global = value;
+        });
+        sliderPanel.addControl(slider);
+        //BABYLON.GUI.Control.AddHeader(layoutShapeBtn, "Sides: ", 5, { isHorizontal:true, controlFirst:true });
+        /*var header = new BABYLON.GUI.TextBlock();
+        header.text = "Sides: 5";
+        header.height = "30px";
+        header.color = "white";
+        header.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        sliderPanel.addControl(header);*/
         // --
         var transformPanel = new BABYLON.GUI.StackPanel();
         metaPanel.addControl(transformPanel);
@@ -180,7 +204,7 @@ var Game = /** @class */ (function () {
         //masterP.isPickable = false;
     };
     Game.prototype.addLayoutShape = function () {
-        var startingShape = new LayoutShape(20, this._scene);
+        var startingShape = new LayoutShape(layoutShapeSides_global, this._scene);
         this._editControl.switchTo(startingShape.pivotMesh);
         this._selectedMesh = startingShape.pivotMesh;
     };
@@ -248,9 +272,8 @@ var Platform = /** @class */ (function () {
     return Platform;
 }());
 var LayoutShape = /** @class */ (function () {
-    function LayoutShape(numSides, scene, pivot, radius) {
+    function LayoutShape(numSides, scene, pivot) {
         if (pivot === void 0) { pivot = new BABYLON.Vector3(0, 0, 0); }
-        if (radius === void 0) { radius = 20; }
         this.coordinates = [];
         this.indices = [];
         this.positions = [];
@@ -258,6 +281,8 @@ var LayoutShape = /** @class */ (function () {
         this.pivotMesh = BABYLON.MeshBuilder.CreateSphere('pivotMesh', { segments: 1, diameter: 1 }, scene);
         this.pivotMesh.position = pivot;
         var angle = 2 * Math.PI / numSides;
+        var radius = numSides;
+        // if (radius < 5){radius = 5;}
         for (var i = 0; i < numSides; i++) {
             var x = radius * Math.sin(i * angle);
             var z = radius * Math.cos(i * angle);
