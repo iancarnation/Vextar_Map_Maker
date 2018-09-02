@@ -72,7 +72,7 @@ class Game {
         */ 
         BABYLON.SceneLoader.ImportMesh("", "assets/", "platform.babylon", this._scene, function (newMeshes) {
             let p = newMeshes[0];
-            newMeshes[0].scaling = new BABYLON.Vector3(0.01,0.01,0.01);
+            p.scaling = new BABYLON.Vector3(0.01,0.01,0.01);
             PLATFORM = p;
         });
         // GUI ---------------------------------
@@ -190,10 +190,7 @@ class Game {
 
     addPlatform() : void // make static method of Platform?
     {
-        let id = "platform";
-        //id += this.platformCount;
-        let p = new Platform();
-        //this.platformCount ++;
+        let p = new Platform(this._editControl.getPosition());
         this._editControl.switchTo(p.mesh);
     }
 
@@ -235,7 +232,7 @@ class Game {
         if (pick != null && pick.hit && !this._editControl.isEditing())
         {
             mesh = pick.pickedMesh;
-            this._editControl.switchTo(mesh);             
+            this._editControl.switchTo(mesh);           
         }       
     }
 }

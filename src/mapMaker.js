@@ -53,7 +53,7 @@ var Game = /** @class */ (function () {
         */
         BABYLON.SceneLoader.ImportMesh("", "assets/", "platform.babylon", this._scene, function (newMeshes) {
             var p = newMeshes[0];
-            newMeshes[0].scaling = new BABYLON.Vector3(0.01, 0.01, 0.01);
+            p.scaling = new BABYLON.Vector3(0.01, 0.01, 0.01);
             PLATFORM = p;
         });
         // GUI ---------------------------------
@@ -152,10 +152,7 @@ var Game = /** @class */ (function () {
         this._editControl.switchTo(startingShape.pivotMesh);
     };
     Game.prototype.addPlatform = function () {
-        var id = "platform";
-        //id += this.platformCount;
-        var p = new Platform();
-        //this.platformCount ++;
+        var p = new Platform(this._editControl.getPosition());
         this._editControl.switchTo(p.mesh);
     };
     Game.prototype.saveScene = function () {
