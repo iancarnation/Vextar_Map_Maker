@@ -2,6 +2,7 @@
 ///<reference path="babylon.d.ts" />
 ///<reference path="babylon.gui.d.ts" />
 var EditControl = org.ssatguru.babylonjs.component.EditControl;
+var masterP;
 var PLATFORM;
 var Game = /** @class */ (function () {
     function Game(canvasElement) {
@@ -24,6 +25,33 @@ var Game = /** @class */ (function () {
         this._camera.setTarget(BABYLON.Vector3.Zero());
         this._camera.attachControl(this._canvas, false);
         this._light = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(0, 1, 0), this._scene);
+        this._assetsManager = new BABYLON.AssetsManager(this._scene);
+        var platformTask = this._assetsManager.addMeshTask("platformTask", "platform", "assets/", "platform.babylon");
+        platformTask.onSuccess = function (task) {
+            masterP = task.loadedMeshes[0];
+            masterP.scaling = new BABYLON.Vector3(0.01, 0.01, 0.01);
+            masterP.id = "masterPlatform";
+            //PLATFORM = masterP;
+        };
+        this._assetsManager.onFinish = function () { return _this.initiatePlatform(); };
+        this._assetsManager.load();
+        /*
+        // -------------- alternative for mesh loading w/out appending
+        BABYLON.SceneLoader.LoadAssetContainer("assets/", "platform.babylon", this._scene, function (_container) {
+            var meshes = _container.meshes;
+            var materials = _container.materials;
+            //...
+            console.log(_container);
+            // Adds all elements to the scene
+            _container.addAllToScene();
+        });
+        // -------------- another way to load the mesh
+        BABYLON.SceneLoader.ImportMesh("", "assets/", "platform.babylon", this._scene, function (newMeshes) {
+            let p = newMeshes[0];
+            p.scaling = new BABYLON.Vector3(0.01,0.01,0.01);
+            PLATFORM = p;
+        });
+        */
         var ground = BABYLON.MeshBuilder.CreateGround('Grid', { width: 20, height: 20, subdivisions: 20 }, this._scene);
         ground.material = new BABYLON.StandardMaterial("GridMaterial", this._scene);
         ground.material.wireframe = true;
@@ -40,22 +68,6 @@ var Game = /** @class */ (function () {
         skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
         skybox.material = skyboxMaterial;
         skybox.isPickable = false;
-        /*
-        // -------------- alternative for mesh loading w/out appending
-        BABYLON.SceneLoader.LoadAssetContainer("assets/", "platform.babylon", this._scene, function (_container) {
-            var meshes = _container.meshes;
-            var materials = _container.materials;
-            //...
-            console.log(_container);
-            // Adds all elements to the scene
-            _container.addAllToScene();
-        });
-        */
-        BABYLON.SceneLoader.ImportMesh("", "assets/", "platform.babylon", this._scene, function (newMeshes) {
-            var p = newMeshes[0];
-            p.scaling = new BABYLON.Vector3(0.01, 0.01, 0.01);
-            PLATFORM = p;
-        });
         // GUI ---------------------------------
         var guiTex = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
         var metaPanel = new BABYLON.GUI.StackPanel();
@@ -87,7 +99,7 @@ var Game = /** @class */ (function () {
         deleteBtn.color = "white";
         deleteBtn.cornerRadius = 20;
         deleteBtn.background = "#942121";
-        deleteBtn.onPointerUpObservable.add(function () { _this._selectedMesh.dispose(); _this._editControl.hide(); });
+        deleteBtn.onPointerUpObservable.add(function () { return _this.deletePlatform(); });
         topPanel.addControl(deleteBtn);
         var platformBtn = BABYLON.GUI.Button.CreateSimpleButton("platformBtn", "Add Platform");
         platformBtn.width = "150px";
@@ -135,13 +147,13 @@ var Game = /** @class */ (function () {
         transformPanel.addControl(scaleBtn);
         //****
         //this._scene.onPointerObservable.add(handlePointer); //forgot where this came from.. EditControl??
-        this._editControl = this.attachEditControl(ground);
+        //this._editControl = this.attachEditControl(ground);
         // ---------------------------------    
-        if (PLATFORM) // need to wait for loading.. this doesn't quite do it
-         {
-            var p = new Platform();
+        /*if (PLATFORM) // need to wait for loading.. this doesn't quite do it
+        {
+            let p = new Platform();
             this._editControl = this.attachEditControl(p.mesh);
-        }
+        } */
     };
     Game.prototype.doRender = function () {
         var _this = this;
@@ -155,6 +167,18 @@ var Game = /** @class */ (function () {
         });
     };
     // ----------------------------------------------------------
+    Game.prototype.deletePlatform = function () {
+        if (this._selectedMesh.id != "masterPlatform") {
+            this._selectedMesh.dispose();
+            this._editControl.hide();
+        }
+    };
+    Game.prototype.initiatePlatform = function () {
+        PLATFORM = masterP;
+        this._editControl = this.attachEditControl(PLATFORM);
+        //masterP.visibility = 0;
+        //masterP.isPickable = false;
+    };
     Game.prototype.addLayoutShape = function () {
         var startingShape = new LayoutShape(20, this._scene);
         this._editControl.switchTo(startingShape.pivotMesh);
